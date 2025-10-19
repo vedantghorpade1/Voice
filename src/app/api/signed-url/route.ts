@@ -6,10 +6,11 @@ export async function GET() {
     const AGENT_ID = process.env.AGENT_ID!;
 
     if (!ELEVENLABS_API_KEY || !AGENT_ID) {
-      return NextResponse.json({ error: "Missing environment variables" }, { status: 500 });
+      console.error("Missing ElevenLabs credentials");
+      return NextResponse.json({ error: "Missing ElevenLabs credentials" }, { status: 500 });
     }
 
-    const response = await fetch(
+    const res = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${AGENT_ID}`,
       {
         headers: {
@@ -18,13 +19,13 @@ export async function GET() {
       }
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!res.ok) {
+      const errorText = await res.text();
       console.error("ElevenLabs error:", errorText);
-      return NextResponse.json({ error: errorText }, { status: response.status });
+      return NextResponse.json({ error: "Failed to fetch signed URL" }, { status: res.status });
     }
 
-    const data = await response.json();
+    const data = await res.json();
     return NextResponse.json({ signedUrl: data.signed_url });
   } catch (err) {
     console.error("Server error:", err);
