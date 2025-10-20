@@ -1,14 +1,20 @@
 import { NextResponse } from "next/server";
-import { env } from "@/config/env";
 
 export async function GET() {
   try {
-    // Env variables are validated in a central place
+    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY!;
+    const AGENT_ID = process.env.AGENT_ID!;
+
+    if (!ELEVENLABS_API_KEY || !AGENT_ID) {
+      console.error("Missing ElevenLabs credentials");
+      return NextResponse.json({ error: "Missing ElevenLabs credentials" }, { status: 500 });
+    }
+
     const res = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${env.AGENT_ID}`,
+      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${AGENT_ID}`,
       {
         headers: {
-          "xi-api-key": env.ELEVENLABS_API_KEY,
+          "xi-api-key": ELEVENLABS_API_KEY,
         },
       }
     );

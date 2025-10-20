@@ -1,44 +1,31 @@
-import mongoose, { Mongoose } from 'mongoose';
-import { env } from '@/config/env';
+import mongoose from 'mongoose';
 
-/**
- * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially
- * during API Route usage.
- */
-interface MongooseCache {
-  conn: Mongoose | null;
-  promise: Promise<Mongoose> | null;
+const MONGODB_URI = process.env.MONGODB_URI as string;
+
+if (!MONGODB_URI) {
+  throw new Error('Please define the MONGODB_URI environment variable');
 }
 
-// Augment the NodeJS global type to include our mongoose cache
-declare global {
-  // eslint-disable-next-line no-var
-  var mongoose: MongooseCache;
-}
-
-let cached: MongooseCache = global.mongoose;
+let cached: { conn: any; promise: any } = (global as any).mongoose;
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+  cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
 async function connectDB() {
-  // If a connection is already cached, return it
   if (cached.conn) {
     return cached.conn;
   }
 
-  // If a connection promise doesn't exist, create it
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(env.MONGODB_URI, opts);
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      return mongoose;
+    });
   }
-
-  // Await the promise and cache the connection object
   cached.conn = await cached.promise;
   return cached.conn;
 }
