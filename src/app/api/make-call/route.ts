@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { env } from "@/config/env";
 
 export async function POST(req: Request) {
   try {
@@ -16,24 +17,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid phone number format. Use +<country_code><number>." }, { status: 400 });
     }
 
-    // Load environment variables
-    const EXOTEL_SID = process.env.EXOTEL_SID;
-    const EXOTEL_TOKEN = process.env.EXOTEL_TOKEN;
-    const EXOTEL_PHONE = process.env.EXOTEL_PHONE;
-    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-    const AGENT_ID = process.env.AGENT_ID;
-    const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
-
-    if (!EXOTEL_SID || !EXOTEL_TOKEN || !EXOTEL_PHONE || !ELEVENLABS_API_KEY || !AGENT_ID || !BASE_URL) {
-      return NextResponse.json({ error: "Missing environment variables" }, { status: 500 });
-    }
-
-    console.log("🧩 Env check:", { EXOTEL_SID, EXOTEL_PHONE, AGENT_ID, BASE_URL });
+    // Env variables are now validated and loaded from a central place
+    console.log("🧩 Env check:", { EXOTEL_SID: env.EXOTEL_SID, EXOTEL_PHONE: env.EXOTEL_PHONE, AGENT_ID: env.AGENT_ID, BASE_URL: env.BASE_URL });
 
     // Get signed ElevenLabs URL
     const signedRes = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${AGENT_ID}`,
-      { headers: { "xi-api-key": ELEVENLABS_API_KEY } }
+      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${env.AGENT_ID}`,
+      { headers: { "xi-api-key": env.ELEVENLABS_API_KEY } }
     );
 
     if (!signedRes.ok) {
@@ -53,16 +43,16 @@ export async function POST(req: Request) {
 
     // Prepare Exotel call
     const exotelParams = new URLSearchParams();
-    exotelParams.append("From", EXOTEL_PHONE);
+    exotelParams.append("From", env.EXOTEL_PHONE);
     exotelParams.append("To", destinationNumber);
-    exotelParams.append("CallerId", EXOTEL_PHONE);
+    exotelParams.append("CallerId", env.EXOTEL_PHONE);
     exotelParams.append(
       "Url",
-      `${BASE_URL}/api/exotel-websocket?signedUrl=${encodeURIComponent(signed_url)}`
+      `${env.BASE_URL}/api/exotel-websocket?signedUrl=${encodeURIComponent(signed_url)}`
     );
 
-    const exotelURL = `https://api.exotel.com/v1/Accounts/${EXOTEL_SID}/Calls/connect.json`;
-    const authHeader = "Basic " + Buffer.from(`${EXOTEL_SID}:${EXOTEL_TOKEN}`).toString("base64");
+    const exotelURL = `https://api.exotel.com/v1/Accounts/${env.EXOTEL_SID}/Calls/connect.json`;
+    const authHeader = "Basic " + Buffer.from(`${env.EXOTEL_SID}:${env.EXOTEL_TOKEN}`).toString("base64");
 
     console.log("📞 Calling Exotel:", exotelURL);
 
