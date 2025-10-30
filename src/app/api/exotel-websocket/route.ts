@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
   // Exotel correctly interprets the response.
   return new Response(xmlResponse, {
     headers: {
-      "Content-Type": "application/xml",
+      "Content-Type": "application/xml", 
     },
   });
 }
